@@ -4,35 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Tile.generated.h"
-
-USTRUCT()
-struct FTileFace
-{
-	GENERATED_BODY()
-
-
-public:
-	UPROPERTY(EditAnywhere)
-	int testInt;
-
-	UPROPERTY(EditAnywhere)
-	TArray<int> test2;
-
-	FTileFace() {
-		//testInt = 0;
-		//test2 = TArray<int>;
-	}
-};
+#include "Tile.h"
+#include "WFCStructure.generated.h"
 
 UCLASS()
-class WAVEFUNCTIONCOLLAPSE_API ATile : public AActor
+class WAVEFUNCTIONCOLLAPSE_API AWFCStructure : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ATile();
+	AWFCStructure();
 
 protected:
 	// Called when the game starts or when spawned
@@ -43,8 +25,29 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FTileFace> AllowedNeighbours;
+	TArray<TSubclassOf<ATile>> TileSet;
 
 	UPROPERTY(EditAnywhere)
-	FTileFace testFace;
+	int Width;
+
+	UPROPERTY(EditAnywhere)
+	int Height;
+
+	UPROPERTY(EditAnywhere)
+	int Depth;
+
+	UPROPERTY(EditAnywhere)
+	float TileSize;
+
+	void GenerateRandom();
+
+	virtual bool ShouldTickIfViewportsOnly() const override;
+
+	UPROPERTY(EditAnywhere)
+	bool bRegenerate;
+
+	void Clear();
+
+	TArray<ATile*> Tiles;
+
 };

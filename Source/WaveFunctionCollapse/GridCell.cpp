@@ -1,12 +1,59 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GridCell.h"
+#include "Engine/World.h"
 
-GridCell::GridCell()
+// Sets default values
+AGridCell::AGridCell()
 {
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
 }
 
-GridCell::~GridCell()
+// Called when the game starts or when spawned
+void AGridCell::BeginPlay()
 {
+	Super::BeginPlay();
+	
+}
+
+// Called every frame
+void AGridCell::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+void AGridCell::Observe()
+{
+	// Pick a random TileType from the wave
+	TSubclassOf<ATile> TileTypeToSpawn = Wave[FMath::RandRange(0, Wave.Num() - 1)];
+
+	Wave.Empty();
+
+	Wave.Add(TileTypeToSpawn);
+
+	CreateTile(TileTypeToSpawn);
+}
+
+void AGridCell::Clear()
+{
+	if (Tile)
+		Tile->Destroy();
+}
+
+void AGridCell::CreateTile(TSubclassOf<ATile> TileTypeToSpawn)
+{
+	Clear();
+	
+	Tile = GetWorld()->SpawnActor<ATile>(TileTypeToSpawn, GetActorLocation(), FRotator::ZeroRotator);
+}
+
+void AGridCell::Initialise(TArray<TSubclassOf<ATile>> TileSet)
+{
+	for (auto TileType : TileSet) {
+		Wave.Add(TileType);
+	}
 }

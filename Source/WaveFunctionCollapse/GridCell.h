@@ -3,16 +3,36 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
 #include "Tile.h"
+#include "GridCell.generated.h"
 
-/**
- * 
- */
-class WAVEFUNCTIONCOLLAPSE_API GridCell
+UCLASS()
+class WAVEFUNCTIONCOLLAPSE_API AGridCell : public AActor
 {
-public:
-	GridCell();
-	~GridCell();
+	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	AGridCell();
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 	ATile* Tile;
+
+	TArray<TSubclassOf<ATile>> Wave;
+
+	void Observe();
+
+	void Clear();
+
+	void CreateTile(TSubclassOf<ATile> TileTypeToSpawn);
+
+	void Initialise(TArray<TSubclassOf<ATile>> TileSet);
 };

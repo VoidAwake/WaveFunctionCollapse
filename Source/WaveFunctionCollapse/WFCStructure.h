@@ -28,17 +28,17 @@ public:
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<ATile>> TileSet;
 
-	UPROPERTY(EditAnywhere)
-	int Width;
+	//UPROPERTY(EditAnywhere)
+	//int Width;
 
-	UPROPERTY(EditAnywhere)
-	int Depth;
+	//UPROPERTY(EditAnywhere)
+	//int Depth;
 
-	UPROPERTY(EditAnywhere)
-	int Height;
+	//UPROPERTY(EditAnywhere)
+	//int Height;
 
-	UPROPERTY(EditAnywhere)
-	float TileSize;
+	//UPROPERTY(EditAnywhere)
+	//float TileSize;
 
 	void GenerateRandom();
 
@@ -47,6 +47,14 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bRegenerate;
 
-	Grid* MyGrid;
+	UPROPERTY(EditAnywhere)
+	AGrid* MyGrid;
 
+	int Observe();
+
+	UPROPERTY(EditAnywhere)
+	bool bTestObserve;
+
+	UPROPERTY(EditAnywhere)
+	bool bClearGrid;
 };

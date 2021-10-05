@@ -1,51 +1,61 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Grid.h"
+#include "Tile.h"
+#include "Engine/World.h"
 
-Grid::Grid(int Width, int Depth, int Height)
+// Sets default values for this component's properties
+AGrid::AGrid()
 {
-	this->Width = Width;
-	this->Depth = Depth;
-	this->Height = Height;
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
 
-	for (int x = 0; x < Width; x++) {
-		for (int y = 0; y < Depth; y++) {
-			for (int z = 0; z < Height; z++) {
-				GridCells.Add(new GridCell());
-			}
-		}
-	}
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
+
+	// ...
 }
 
-Grid::~Grid()
+// Called when the game starts or when spawned
+void AGrid::BeginPlay()
 {
-	Clear();
+	Super::BeginPlay();
+	
 }
 
-GridCell* Grid::GetGridCell(int x, int y, int z)
+// Called every frame
+void AGrid::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// ...
+}
+
+AGridCell* AGrid::GetGridCell(int x, int y, int z)
 {
 	return GridCells[x * Depth * Height + y * Height + z];
 }
 
-void Grid::Clear()
+void AGrid::Clear()
 {
 	for (auto GridCell : GridCells) {
-		ATile* Tile = GridCell->Tile;
+		if (GridCell) {
+			GridCell->Clear();
 
-		if (Tile)
-			Tile->Destroy();
+			GridCell->Destroy();
+		}
 	}
+
+	GridCells.Empty();
 }
 
-void Grid::ForEachGridCell(TFunctionRef<void(GridCell*)> Func)
+void AGrid::ForEachGridCell(TFunctionRef<void(AGridCell*)> Func)
 {
-	ForEachGridCell([&](GridCell* GridCell, int x, int y, int z) {
+	ForEachGridCell([&](AGridCell* GridCell, int x, int y, int z) {
 		Func(GridCell);
-	});
+		});
 }
 
-void Grid::ForEachGridCell(TFunctionRef<void(GridCell*, int, int, int)> Func)
+void AGrid::ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func)
 {
 	for (int x = 0; x < Width; x++) {
 		for (int y = 0; y < Depth; y++) {
@@ -55,3 +65,23 @@ void Grid::ForEachGridCell(TFunctionRef<void(GridCell*, int, int, int)> Func)
 		}
 	}
 }
+
+void AGrid::GenerateGrid(TArray<TSubclassOf<ATile>> TileSet)
+{
+	Clear();
+
+	for (int x = 0; x < Width; x++) {
+		for (int y = 0; y < Depth; y++) {
+			for (int z = 0; z < Height; z++) {
+				FVector SpawnPosition = GetActorLocation() + FVector(x, y, z) * TileSize;
+
+				AGridCell* SpawnedGridCell = GetWorld()->SpawnActor<AGridCell>(GridCellToSpawn, SpawnPosition, FRotator::ZeroRotator);
+
+				GridCells.Add(SpawnedGridCell);
+
+				SpawnedGridCell->Initialise(TileSet);
+			}
+		}
+	}
+}
+

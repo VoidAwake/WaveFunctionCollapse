@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
+#include "Grid.h"
 #include "WFCStructure.generated.h"
 
 UCLASS()
@@ -31,10 +32,10 @@ public:
 	int Width;
 
 	UPROPERTY(EditAnywhere)
-	int Height;
+	int Depth;
 
 	UPROPERTY(EditAnywhere)
-	int Depth;
+	int Height;
 
 	UPROPERTY(EditAnywhere)
 	float TileSize;
@@ -46,8 +47,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bRegenerate;
 
-	void Clear();
-
-	TArray<ATile*> Tiles;
+	Grid* MyGrid;
 
 };

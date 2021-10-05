@@ -27,7 +27,6 @@ void AWFCStructure::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	if (bRegenerate) {
-		Clear();
 		GenerateRandom();
 
 		bRegenerate = false;
@@ -36,32 +35,24 @@ void AWFCStructure::Tick(float DeltaTime)
 
 void AWFCStructure::GenerateRandom()
 {
-	for (int x = 0; x < Depth; x++) {
-		for (int y = 0; y < Width; y++) {
-			for (int z = 0; z < Height; z++) {
-				TSubclassOf<ATile> TileToSpawn = TileSet[FMath::RandRange(0, TileSet.Num() - 1)];
+	if (MyGrid)
+		MyGrid->~Grid();
 
-				FVector SpawnPosition = GetActorLocation() + FVector(x, y, z) * TileSize;
+	MyGrid = new Grid(Width, Depth, Height);
 
-				ATile* SpawnedTile = GetWorld()->SpawnActor<ATile>(TileToSpawn, SpawnPosition, FRotator::ZeroRotator);
+	MyGrid->ForEachGridCell([&](GridCell* GridCell, int x, int y, int z) {
+		TSubclassOf<ATile> TileToSpawn = TileSet[FMath::RandRange(0, TileSet.Num() - 1)];
 
-				Tiles.Add(SpawnedTile);
-			}
-		}
-	}
+		FVector SpawnPosition = GetActorLocation() + FVector(x, y, z) * TileSize;
+
+		ATile* SpawnedTile = GetWorld()->SpawnActor<ATile>(TileToSpawn, SpawnPosition, FRotator::ZeroRotator);
+
+		GridCell->Tile = SpawnedTile;
+	});
 }
 
 bool AWFCStructure::ShouldTickIfViewportsOnly() const
 {
 	return true;
-}
-
-void AWFCStructure::Clear()
-{
-	for (auto Tile : Tiles) {
-		Tile->Destroy();
-	}
-
-	Tiles.Empty();
 }
 

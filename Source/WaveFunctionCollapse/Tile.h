@@ -17,6 +17,21 @@ public:
 	TArray<TSubclassOf<ATile>> TileTypes;
 };
 
+USTRUCT()
+struct FBoolArray
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TArray<bool> Bools;
+
+	FBoolArray () {
+		Bools.Add(true);
+		Bools.Add(true);
+	}
+};
+
 UCLASS()
 class WAVEFUNCTIONCOLLAPSE_API ATile : public AActor
 {
@@ -38,4 +53,7 @@ public:
 	TMap<EDirection, FTileFace> AllowedNeighbours;
 
 	TArray<TSubclassOf<ATile>> AllowedNeighboursInDirection(EDirection Direction);
+
+	//UPROPERTY(EditAnywhere)
+	//TMap<TSubclassOf<ATile>, FBoolArray> TestFormat;
 };

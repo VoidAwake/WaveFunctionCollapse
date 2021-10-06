@@ -8,6 +8,7 @@
 #include "Grid.h"
 #include "GridCell.h"
 #include "Containers/Queue.h"
+#include "TileSet.h"
 #include "WFCStructure.generated.h"
 
 UCLASS()
@@ -28,7 +29,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<ATile>> TileSet;
+	UTileSet* TileSet;
 
 	virtual bool ShouldTickIfViewportsOnly() const override;
 

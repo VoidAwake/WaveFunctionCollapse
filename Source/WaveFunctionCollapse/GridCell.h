@@ -43,4 +43,7 @@ public:
 	bool Allows(TSubclassOf<ATile> TileType, EDirection Direction);
 
 	FVector GridPosition;
+
+	UPROPERTY(EditAnywhere)
+	bool bBorders;
 };

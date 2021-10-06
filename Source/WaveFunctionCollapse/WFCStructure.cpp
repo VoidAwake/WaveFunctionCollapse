@@ -74,7 +74,10 @@ bool AWFCStructure::ShouldTickIfViewportsOnly() const
 
 int AWFCStructure::Observe()
 {
-	int MinEntropy = TileSet.Num() + 1;
+	if (!TileSet)
+		return -1;
+
+	int MinEntropy = TileSet->TileSet.Num() + 1;
 	AGridCell* CellWithMinEntropy = nullptr;
 
 	MyGrid->ForEachGridCell([&](AGridCell* GridCell) {
@@ -209,12 +212,16 @@ FString AWFCStructure::DirectionToString(EDirection Direction)
 
 void AWFCStructure::Generate()
 {
-	if (MyGrid) {
-		MyGrid->GenerateGrid(TileSet);
+	if (!MyGrid)
+		return;
 
-		while (Observe() == 0) {
-			Propagate();
-		}
+	if (!TileSet)
+		return;
+
+	MyGrid->GenerateGrid(TileSet->TileSet);
+
+	while (Observe() == 0) {
+		Propagate();
 	}
 }
 

@@ -26,3 +26,11 @@ void ATile::Tick(float DeltaTime)
 
 }
 
+TArray<TSubclassOf<ATile>> ATile::AllowedNeighboursInDirection(EDirection Direction)
+{
+	if (AllowedNeighbours.Contains(Direction))
+		return AllowedNeighbours[Direction].TileTypes;
+	else
+		return TArray<TSubclassOf<ATile>>();
+}
+

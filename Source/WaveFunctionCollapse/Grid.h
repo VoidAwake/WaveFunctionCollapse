@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GridCell.h"
+#include "Direction.h"
 #include "Grid.generated.h"
 
 UCLASS()
@@ -53,4 +54,8 @@ public:
 	void ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func);
 
 	void GenerateGrid(TArray<TSubclassOf<ATile>> TileSet);
+
+	AGridCell* GetAdjacentCell(int x, int y, int z, EDirection Direction);
+
+	AGridCell* GetAdjacentCell(AGridCell* GridCell, EDirection Direction);
 };

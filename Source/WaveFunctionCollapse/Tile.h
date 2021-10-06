@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Direction.h"
 #include "Tile.generated.h"
 
 USTRUCT()
@@ -11,18 +12,9 @@ struct FTileFace
 {
 	GENERATED_BODY()
 
-
 public:
 	UPROPERTY(EditAnywhere)
-	int testInt;
-
-	UPROPERTY(EditAnywhere)
-	TArray<int> test2;
-
-	FTileFace() {
-		//testInt = 0;
-		//test2 = TArray<int>;
-	}
+	TArray<TSubclassOf<ATile>> TileTypes;
 };
 
 UCLASS()
@@ -43,8 +35,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FTileFace> AllowedNeighbours;
+	TMap<EDirection, FTileFace> AllowedNeighbours;
 
-	UPROPERTY(EditAnywhere)
-	FTileFace testFace;
+	TArray<TSubclassOf<ATile>> AllowedNeighboursInDirection(EDirection Direction);
 };

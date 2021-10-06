@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
+#include "Direction.h"
 #include "GridCell.generated.h"
 
 UCLASS()
@@ -26,6 +27,7 @@ public:
 
 	ATile* Tile;
 
+	UPROPERTY(VisibleAnywhere)
 	TArray<TSubclassOf<ATile>> Wave;
 
 	void Observe();
@@ -34,5 +36,11 @@ public:
 
 	void CreateTile(TSubclassOf<ATile> TileTypeToSpawn);
 
-	void Initialise(TArray<TSubclassOf<ATile>> TileSet);
+	void Initialise(TArray<TSubclassOf<ATile>> TileSet, int x, int y, int z);
+
+	bool bChanged;
+
+	bool Allows(TSubclassOf<ATile> TileType, EDirection Direction);
+
+	FVector GridPosition;
 };

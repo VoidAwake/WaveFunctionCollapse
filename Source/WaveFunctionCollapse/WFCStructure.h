@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Tile.h"
 #include "Grid.h"
+#include "GridCell.h"
+#include "Containers/Queue.h"
 #include "WFCStructure.generated.h"
 
 UCLASS()
@@ -28,33 +30,30 @@ public:
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<ATile>> TileSet;
 
-	//UPROPERTY(EditAnywhere)
-	//int Width;
-
-	//UPROPERTY(EditAnywhere)
-	//int Depth;
-
-	//UPROPERTY(EditAnywhere)
-	//int Height;
-
-	//UPROPERTY(EditAnywhere)
-	//float TileSize;
-
-	void GenerateRandom();
-
 	virtual bool ShouldTickIfViewportsOnly() const override;
+
+	UPROPERTY(EditAnywhere)
+	AGrid* MyGrid;
 
 	UPROPERTY(EditAnywhere)
 	bool bRegenerate;
 
 	UPROPERTY(EditAnywhere)
-	AGrid* MyGrid;
-
-	int Observe();
+	bool bClearGrid;
 
 	UPROPERTY(EditAnywhere)
 	bool bTestObserve;
 
 	UPROPERTY(EditAnywhere)
-	bool bClearGrid;
+	bool bTestPropagate;
+
+	int Observe();
+
+	bool Propagate();
+
+	TQueue<AGridCell*> ChangedCellsQueue;
+
+	FString DirectionToString(EDirection Direction);
+
+	void Generate();
 };

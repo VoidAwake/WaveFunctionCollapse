@@ -3,7 +3,7 @@
 
 #include "WFCStructure.h"
 #include "Engine/World.h"
-#include "Components/BoxComponent.h"
+#include "GameFramework/Actor.h"
 #include "Direction.h"
 
 // Sets default values
@@ -15,16 +15,17 @@ AWFCStructure::AWFCStructure()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
 
 	// TODO: Come back to this, for now just set up the grid manually
-	//MyGrid = CreateDefaultSubobject<UGrid>(TEXT("Grid Component"));
+	Grid = CreateDefaultSubobject<UGrid>(TEXT("Grid Component"));
 	//MyGrid->AttachParent = RootComponent;
 	//MyGrid->AttachToComponent
 
-	//AddOwnedComponent(MyGrid);
-
-	//MyGrid = FindComponentByClass<UGrid>();
-
 	//UBoxComponent* PickupBoundingBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Bounding Box"));
 	//PickupBoundingBox->AttachTo(RootComponent);
+
+	AddOwnedComponent(Grid);
+
+	//Grid = CreateDefaultSubobject<UGrid>(TEXT("Grid Component"));
+	//AddOwnedComponent(Grid);
 }
 
 // Called when the game starts or when spawned
@@ -53,8 +54,8 @@ void AWFCStructure::Tick(float DeltaTime)
 	}
 
 	if (bClearGrid) {
-		if (MyGrid)
-			MyGrid->Clear();
+		if (Grid)
+			Grid->Clear();
 
 		bClearGrid = false;
 	}
@@ -80,7 +81,7 @@ int AWFCStructure::Observe()
 	int MinEntropy = TileSet->TileSet.Num() + 1;
 	AGridCell* CellWithMinEntropy = nullptr;
 
-	MyGrid->ForEachGridCell([&](AGridCell* GridCell) {
+	Grid->ForEachGridCell([&](AGridCell* GridCell) {
 		//if (GridCell->Wave.Num() == 0)
 		//	return -1; // Contradiction
 
@@ -130,7 +131,7 @@ bool AWFCStructure::Propagate()
 		EDirection::DOWN
 	};
 
-	if (MyGrid) {
+	if (Grid) {
 		while (!ChangedCellsQueue.IsEmpty()) {
 			AGridCell* GridCell = *(ChangedCellsQueue.Peek());
 			ChangedCellsQueue.Pop();
@@ -139,7 +140,7 @@ bool AWFCStructure::Propagate()
 			for (auto Direction : Directions) {
 				UE_LOG(LogTemp, Warning, TEXT("  %s"), *DirectionToString(Direction));
 
-				AGridCell* AdjacentCell = MyGrid->GetAdjacentCell(GridCell, Direction);
+				AGridCell* AdjacentCell = Grid->GetAdjacentCell(GridCell, Direction);
 
 				if (AdjacentCell) {
 					TArray<TSubclassOf<ATile>> TilesToRemove;
@@ -212,13 +213,13 @@ FString AWFCStructure::DirectionToString(EDirection Direction)
 
 void AWFCStructure::Generate()
 {
-	if (!MyGrid)
+	if (!Grid)
 		return;
 
 	if (!TileSet)
 		return;
 
-	MyGrid->GenerateGrid(TileSet->TileSet);
+	Grid->GenerateGrid(TileSet->TileSet);
 
 	while (Observe() == 0) {
 		Propagate();

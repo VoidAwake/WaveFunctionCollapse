@@ -4,18 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/ActorComponent.h"
 #include "GridCell.h"
 #include "Direction.h"
 #include "Grid.generated.h"
 
-UCLASS()
-class WAVEFUNCTIONCOLLAPSE_API AGrid : public AActor
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+class WAVEFUNCTIONCOLLAPSE_API UGrid : public UActorComponent
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AGrid();
+	UGrid();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,10 +24,7 @@ protected:
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	//Grid(int Width, int Depth, int Height);
-	//~Grid();
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(EditAnywhere)
 	int Width;
@@ -39,9 +37,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float TileSize;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AGridCell> GridCellToSpawn;
 
 	TArray<AGridCell*> GridCells;
 

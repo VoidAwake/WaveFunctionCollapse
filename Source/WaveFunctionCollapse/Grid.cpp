@@ -2,40 +2,37 @@
 
 #include "Grid.h"
 #include "Tile.h"
+#include "GridCell.h"
 #include "Engine/World.h"
 
 // Sets default values for this component's properties
-AGrid::AGrid()
+UGrid::UGrid()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
-
-	// ...
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
-void AGrid::BeginPlay()
+void UGrid::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
-void AGrid::Tick(float DeltaTime)
+void UGrid::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::Tick(DeltaTime);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
 }
 
-AGridCell* AGrid::GetGridCell(int x, int y, int z)
+AGridCell* UGrid::GetGridCell(int x, int y, int z)
 {
 	return GridCells[x * Depth * Height + y * Height + z];
 }
 
-void AGrid::Clear()
+void UGrid::Clear()
 {
 	for (auto GridCell : GridCells) {
 		if (GridCell) {
@@ -48,14 +45,14 @@ void AGrid::Clear()
 	GridCells.Empty();
 }
 
-void AGrid::ForEachGridCell(TFunctionRef<void(AGridCell*)> Func)
+void UGrid::ForEachGridCell(TFunctionRef<void(AGridCell*)> Func)
 {
 	ForEachGridCell([&](AGridCell* GridCell, int x, int y, int z) {
 		Func(GridCell);
 		});
 }
 
-void AGrid::ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func)
+void UGrid::ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func)
 {
 	for (int x = 0; x < Width; x++) {
 		for (int y = 0; y < Depth; y++) {
@@ -66,16 +63,18 @@ void AGrid::ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func)
 	}
 }
 
-void AGrid::GenerateGrid(TArray<TSubclassOf<ATile>> TileSet)
+void UGrid::GenerateGrid(TArray<TSubclassOf<ATile>> TileSet)
 {
 	Clear();
 
 	for (int x = 0; x < Width; x++) {
 		for (int y = 0; y < Depth; y++) {
 			for (int z = 0; z < Height; z++) {
-				FVector SpawnPosition = GetActorLocation() + FVector(x, y, z) * TileSize;
+				FVector SpawnPosition = GetOwner()->GetActorLocation() + FVector(x, y, z) * TileSize;
 
-				AGridCell* SpawnedGridCell = GetWorld()->SpawnActor<AGridCell>(GridCellToSpawn, SpawnPosition, FRotator::ZeroRotator);
+				AGridCell* SpawnedGridCell = GetWorld()->SpawnActor<AGridCell>(SpawnPosition, FRotator::ZeroRotator);
+
+				SpawnedGridCell->AttachToActor(GetOwner(), FAttachmentTransformRules::KeepWorldTransform);
 
 				GridCells.Add(SpawnedGridCell);
 
@@ -85,7 +84,7 @@ void AGrid::GenerateGrid(TArray<TSubclassOf<ATile>> TileSet)
 	}
 }
 
-AGridCell* AGrid::GetAdjacentCell(int x, int y, int z, EDirection Direction)
+AGridCell* UGrid::GetAdjacentCell(int x, int y, int z, EDirection Direction)
 {
 	switch (Direction)
 	{
@@ -119,7 +118,7 @@ AGridCell* AGrid::GetAdjacentCell(int x, int y, int z, EDirection Direction)
 }
 
 
-AGridCell* AGrid::GetAdjacentCell(AGridCell* GridCell, EDirection Direction)
+AGridCell* UGrid::GetAdjacentCell(AGridCell* GridCell, EDirection Direction)
 {
 	if (GridCell)
 		return GetAdjacentCell(GridCell->GridPosition.X, GridCell->GridPosition.Y, GridCell->GridPosition.Z, Direction);

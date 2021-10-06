@@ -9,6 +9,7 @@
 #include "GridCell.h"
 #include "Containers/Queue.h"
 #include "TileSet.h"
+#include "TestGridComponent.h"
 #include "WFCStructure.generated.h"
 
 UCLASS()
@@ -33,8 +34,8 @@ public:
 
 	virtual bool ShouldTickIfViewportsOnly() const override;
 
-	UPROPERTY(EditAnywhere)
-	AGrid* MyGrid;
+	UPROPERTY(VisibleInstanceOnly)
+	UGrid* Grid;
 
 	UPROPERTY(EditAnywhere)
 	bool bRegenerate;

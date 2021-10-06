@@ -55,6 +55,9 @@ void AGridCell::CreateTile(TSubclassOf<ATile> TileTypeToSpawn)
 	Clear();
 	
 	Tile = GetWorld()->SpawnActor<ATile>(TileTypeToSpawn, GetActorLocation(), FRotator::ZeroRotator);
+
+	// TODO: May need to revisit this
+	Tile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 }
 
 void AGridCell::Initialise(TArray<TSubclassOf<ATile>> TileSet, int x, int y, int z)

@@ -1,42 +1,36 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "WFCStructure.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Direction.h"
+#include "DirectionUtility.h"
 
-// Sets default values
 AWFCStructure::AWFCStructure()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
 
-	// TODO: Come back to this, for now just set up the grid manually
 	Grid = CreateDefaultSubobject<UGrid>(TEXT("Grid Component"));
-	//MyGrid->AttachParent = RootComponent;
-	//MyGrid->AttachToComponent
-
-	//UBoxComponent* PickupBoundingBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Bounding Box"));
-	//PickupBoundingBox->AttachTo(RootComponent);
 
 	AddOwnedComponent(Grid);
 
-	//Grid = CreateDefaultSubobject<UGrid>(TEXT("Grid Component"));
-	//AddOwnedComponent(Grid);
+	Directions = {
+		EDirection::LEFT,
+		EDirection::RIGHT,
+		EDirection::FORWARD,
+		EDirection::BACK,
+		EDirection::UP,
+		EDirection::DOWN
+	};
 }
 
-// Called when the game starts or when spawned
 void AWFCStructure::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	//GenerateRandom();
+
+	Generate();
 }
 
-// Called every frame
 void AWFCStructure::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -47,168 +41,41 @@ void AWFCStructure::Tick(float DeltaTime)
 		bRegenerate = false;
 	}
 
+	if (bGenerateGrid) {
+		if (Grid)
+			Grid->GenerateGrid(TileSet->TileSet);
+
+		bGenerateGrid = false;
+	}
+
+	if (bCreateBorders) {
+		CreateBorders();
+
+		bCreateBorders = false;
+	}
+
 	if (bTestObserve) {
 		Observe();
 
 		bTestObserve = false;
 	}
 
-	if (bClearGrid) {
-		if (Grid)
-			Grid->Clear();
-
-		bClearGrid = false;
-	}
-
-
 	if (bTestPropagate) {
 		Propagate();
 
 		bTestPropagate = false;
+	}
+
+	if (bTestBacktrack) {
+		Backtrack();
+
+		bTestBacktrack = false;
 	}
 }
 
 bool AWFCStructure::ShouldTickIfViewportsOnly() const
 {
 	return true;
-}
-
-int AWFCStructure::Observe()
-{
-	if (!TileSet)
-		return -1;
-
-	int MinEntropy = TileSet->TileSet.Num() + 1;
-	AGridCell* CellWithMinEntropy = nullptr;
-
-	Grid->ForEachGridCell([&](AGridCell* GridCell) {
-		//if (GridCell->Wave.Num() == 0)
-		//	return -1; // Contradiction
-
-		if (GridCell->Wave.Num() == MinEntropy) {
-			// TODO: Not properly random
-			if (FMath::RandBool()) { // Pick on at random
-				MinEntropy = GridCell->Wave.Num();
-				CellWithMinEntropy = GridCell;
-			}
-		}
-
-		// TODO: Duplicate Code
-		if (GridCell->Wave.Num() < MinEntropy && GridCell->Wave.Num() > 1) {
-			MinEntropy = GridCell->Wave.Num();
-			CellWithMinEntropy = GridCell;
-		}
-	});
-
-	if (CellWithMinEntropy) {
-		UE_LOG(LogTemp, Warning, TEXT("Min entropy was %i"), MinEntropy);
-
-		CellWithMinEntropy->Observe();
-
-		ChangedCellsQueue.Enqueue(CellWithMinEntropy);
-
-		return 0; // Continue
-	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("All cells observed"));
-
-		return 1; // Complete
-	}
-}
-
-bool AWFCStructure::Propagate()
-{
-	// TODO: Fix naming convention
-	bool changed = false;
-
-	// TODO: Move outside this function
-	TArray<EDirection> Directions = {
-		EDirection::LEFT,
-		EDirection::RIGHT,
-		EDirection::FORWARD,
-		EDirection::BACK,
-		EDirection::UP,
-		EDirection::DOWN
-	};
-
-	if (Grid) {
-		while (!ChangedCellsQueue.IsEmpty()) {
-			AGridCell* GridCell = *(ChangedCellsQueue.Peek());
-			ChangedCellsQueue.Pop();
-
-			UE_LOG(LogTemp, Warning, TEXT("Cell has been changed: Should run once per step"));
-			for (auto Direction : Directions) {
-				UE_LOG(LogTemp, Warning, TEXT("  %s"), *DirectionToString(Direction));
-
-				AGridCell* AdjacentCell = Grid->GetAdjacentCell(GridCell, Direction);
-
-				if (AdjacentCell) {
-					TArray<TSubclassOf<ATile>> TilesToRemove;
-
-					for (auto AdjacentWaveTile : AdjacentCell->Wave) {
-						// if that tile is not allowed from the current tile
-						if (!GridCell->Allows(AdjacentWaveTile, Direction)) {
-							TilesToRemove.Add(AdjacentWaveTile);
-
-							FString TileName = AdjacentWaveTile->GetDefaultObject<ATile>()->GetName();
-
-							
-
-							UE_LOG(LogTemp, Warning, TEXT("    %s disallowed"), *TileName);
-						}
-					}
-
-					if (TilesToRemove.Num() > 0) {
-						//AdjacentCell->bChanged = true;
-
-						ChangedCellsQueue.Enqueue(AdjacentCell);
-
-						changed = true;
-					}
-
-					for (auto TileToRemove : TilesToRemove) {
-						AdjacentCell->Wave.Remove(TileToRemove);
-					}
-
-					if (AdjacentCell->Wave.Num() == 0) {
-						UE_LOG(LogTemp, Warning, TEXT("    Contradiction"));
-					}
-					else if (AdjacentCell->Wave.Num() == 1) {
-						UE_LOG(LogTemp, Warning, TEXT("    Observed"));
-						AdjacentCell->Observe();
-					}
-				}
-				else {
-					UE_LOG(LogTemp, Warning, TEXT("    No cell in this direction."));
-				}
-			}			
-		}
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Has been changed? %s"), (changed ? TEXT("true") : TEXT("false")));
-
-	return changed;
-}
-
-FString AWFCStructure::DirectionToString(EDirection Direction)
-{
-	switch (Direction)
-	{
-	case EDirection::LEFT:
-		return FString(TEXT("Left"));
-	case EDirection::RIGHT:
-		return FString(TEXT("Right"));
-	case EDirection::FORWARD:
-		return FString(TEXT("Forward"));
-	case EDirection::BACK:
-		return FString(TEXT("Back"));
-	case EDirection::UP:
-		return FString(TEXT("Up"));
-	case EDirection::DOWN:
-		return FString(TEXT("Down"));
-	}
-
-	return FString();
 }
 
 void AWFCStructure::Generate()
@@ -219,10 +86,183 @@ void AWFCStructure::Generate()
 	if (!TileSet)
 		return;
 
-	Grid->GenerateGrid(TileSet->TileSet);
+	//for (int i = 0; i < MaxGenerationAttempts; i++) {
+		Grid->GenerateGrid(TileSet->TileSet);
 
-	while (Observe() == 0) {
-		Propagate();
-	}
+		if (bCleanBorders) {
+			CreateBorders();
+		}
+
+		bool bContinue = true;
+
+		bool bContradiction = false;
+
+		while (Observe() == 0 && bContinue) {
+			bContradiction = !Propagate();
+
+			if (bContradiction)
+				bContradiction = !Backtrack();
+
+			if (bContradiction)
+				bContinue = false;
+
+			//if (bStopOnContradiction && bContradiction)
+			//	bContinue = false;
+		}
+
+		if (!bContradiction) {
+			UE_LOG(LogTemp, Warning, TEXT("Success"));
+
+			//break;
+		}
+	//}
 }
 
+int AWFCStructure::Observe()
+{
+	AGridCell* CellWithMinEntropy = GetCellWithMinEntropy();
+
+	if (!CellWithMinEntropy)
+		return 1; // Complete or failed
+
+	// Store the observation in the backtrack array
+
+	UObservation* Observation = NewObject<UObservation>(this);
+
+	Observation->Initialise(CellWithMinEntropy);
+
+	BacktrackQueue.Push(Observation);
+
+	CellWithMinEntropy->Observe();
+
+	ChangedCellsQueue.Enqueue(CellWithMinEntropy);
+
+	//UE_LOG(LogTemp, Warning, TEXT("Old Wave Length: %i"), BacktrackQueue[BacktrackQueue.Num() - 1]->OldWave.Num());
+
+	return 0; // Continue
+}
+
+AGridCell* AWFCStructure::GetCellWithMinEntropy()
+{
+	if (!TileSet)
+		return nullptr;
+
+	int MinEntropy = TileSet->TileSet.Num() + 1;
+	AGridCell* CellWithMinEntropy = nullptr;
+
+	Grid->ForEachGridCell([&](AGridCell* GridCell) {
+		int WaveSize = GridCell->Wave.Num();
+
+		if (WaveSize == MinEntropy) {
+			// TODO: Not an even random distribution
+			if (FMath::RandBool()) {
+				MinEntropy = WaveSize;
+				CellWithMinEntropy = GridCell;
+			}
+		}
+		else if (WaveSize < MinEntropy && WaveSize > 1) {
+			MinEntropy = GridCell->Wave.Num();
+			CellWithMinEntropy = GridCell;
+		}
+	});
+
+	return CellWithMinEntropy;
+}
+
+bool AWFCStructure::Propagate(bool bEnableBacktrack)
+{
+	if (!Grid)
+		return false;
+
+	while (!ChangedCellsQueue.IsEmpty()) {
+		AGridCell* GridCell = *(ChangedCellsQueue.Peek());
+		ChangedCellsQueue.Pop();
+
+		for (auto Direction : Directions) {
+			AGridCell* AdjacentCell = Grid->GetAdjacentCell(GridCell, Direction);
+
+			if (!AdjacentCell)
+				continue;
+
+			bool bContradiction = RemoveDisallowedTileTypes(GridCell, AdjacentCell, Direction);
+
+			if (bContradiction) {
+				UE_LOG(LogTemp, Warning, TEXT("Contradiction"));
+				return false;
+			}
+		}			
+	}
+
+	return true;
+}
+
+bool AWFCStructure::RemoveDisallowedTileTypes(AGridCell* GridCell, AGridCell* AdjacentGridCell, EDirection Direction)
+{
+	TArray<TSubclassOf<ATile>> TilesToRemove;
+
+	for (auto AdjacentWaveTile : AdjacentGridCell->Wave) {
+		// Check if the the tile type in the adjacent wave is allowed
+		if (!GridCell->Allows(AdjacentWaveTile, Direction)) {
+			TilesToRemove.Add(AdjacentWaveTile);
+
+			//FString TileName = AdjacentWaveTile->GetDefaultObject<ATile>()->GetName();
+
+			//UE_LOG(LogTemp, Warning, TEXT("    %s disallowed"), *TileName);
+		}
+	}
+
+	if (TilesToRemove.Num() > 0) {
+		if (bEnableBacktrack) {
+			UPropagation* Propagation = NewObject<UPropagation>(this);
+
+			BacktrackQueue[BacktrackQueue.Num() - 1]->Propagations.Push(Propagation);
+
+			Propagation->Initialise(AdjacentGridCell);
+		}
+
+		ChangedCellsQueue.Enqueue(AdjacentGridCell);
+	}
+
+	return !AdjacentGridCell->RemoveTileTypesFromWave(TilesToRemove);
+}
+
+void AWFCStructure::CreateBorders()
+{
+	if (!Grid) {
+		UE_LOG(LogTemp, Error, TEXT("Border creation failed: No grid found"));
+		return;
+	}
+
+	auto ChangedGridCells = Grid->CreateBorders(BorderTile);
+
+	for (auto ChangedGridCell : ChangedGridCells) {
+		ChangedCellsQueue.Enqueue(ChangedGridCell);
+	}
+
+	Propagate(false);
+}
+
+bool AWFCStructure::Backtrack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attempting Backtrack"));
+
+	if (BacktrackQueue.Num() == 0) {
+		UE_LOG(LogTemp, Warning, TEXT("Backtrack failed: Backtrack queue was empty"));
+		return false;
+	}
+
+	ChangedCellsQueue.Empty();
+
+	UObservation* LastObservation = BacktrackQueue.Pop();
+
+	// TEST: Undo the propagations, not removing tiles.
+
+	while (LastObservation->Propagations.Num() > 0) {
+		UPropagation* Propagation = LastObservation->Propagations.Pop();
+
+		Propagation->GridCell->RestoreWave();
+	}
+
+	// Undo the observation
+	return LastObservation->GridCell->RestoreWave();
+}

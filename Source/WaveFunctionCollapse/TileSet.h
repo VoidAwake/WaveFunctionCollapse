@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,9 +5,6 @@
 #include "Tile.h"
 #include "TileSet.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class WAVEFUNCTIONCOLLAPSE_API UTileSet : public UDataAsset
 {

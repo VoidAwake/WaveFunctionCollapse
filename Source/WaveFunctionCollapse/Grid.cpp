@@ -1,63 +1,99 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Grid.h"
 #include "Tile.h"
 #include "GridCell.h"
 #include "Engine/World.h"
 
-// Sets default values for this component's properties
 UGrid::UGrid()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void UGrid::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void UGrid::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	if (bClearGrid) {
+		Clear();
+
+		bClearGrid = false;
+	}
 }
 
 AGridCell* UGrid::GetGridCell(int x, int y, int z)
 {
-	return GridCells[x * Depth * Height + y * Height + z];
+	int GridCellIndex = x * Depth * Height + y * Height + z;
+
+	if (GridCells.IsValidIndex(GridCellIndex))
+		return GridCells[GridCellIndex];
+	else
+		return nullptr;
 }
 
 void UGrid::Clear()
 {
+	// Clear and destroy all GridCells
 	for (auto GridCell : GridCells) {
+		GridCell->Clear();
+
+		GridCell->Destroy();
+	}
+
+	GridCells.Empty();
+
+	// Since references are not persistent, also destroy all attached GridCell actors
+	TArray<AActor*> AttachedGridCellActors;
+	
+	GetOwner()->GetAttachedActors(AttachedGridCellActors);
+
+	for (auto AttachedGridCellActor : AttachedGridCellActors) {
+		AGridCell* GridCell = Cast<AGridCell>(AttachedGridCellActor);
+
 		if (GridCell) {
 			GridCell->Clear();
+
+			// Destroy all attached Tile actors
+			TArray<AActor*> AttachedTileActors;
+
+			GridCell->GetAttachedActors(AttachedTileActors);
+
+			for (auto AttachedTileActor : AttachedTileActors) {
+				ATile* Tile = Cast<ATile>(AttachedTileActor);
+
+				if (Tile) {
+					Tile->Destroy();
+				}
+			}
 
 			GridCell->Destroy();
 		}
 	}
 
-	GridCells.Empty();
+	CurrentWidth = 0;
+	CurrentDepth = 0;
+	CurrentHeight = 0;
 }
 
 void UGrid::ForEachGridCell(TFunctionRef<void(AGridCell*)> Func)
 {
 	ForEachGridCell([&](AGridCell* GridCell, int x, int y, int z) {
 		Func(GridCell);
-		});
+	});
 }
 
 void UGrid::ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func)
 {
-	for (int x = 0; x < Width; x++) {
-		for (int y = 0; y < Depth; y++) {
-			for (int z = 0; z < Height; z++) {
-				Func(GetGridCell(x, y, z), x, y, z);
+	for (int x = 0; x < CurrentWidth; x++) {
+		for (int y = 0; y < CurrentDepth; y++) {
+			for (int z = 0; z < CurrentHeight; z++) {
+				AGridCell* GridCell = GetGridCell(x, y, z);
+
+				if (GridCell)
+					Func(GridCell, x, y, z);
 			}
 		}
 	}
@@ -65,12 +101,23 @@ void UGrid::ForEachGridCell(TFunctionRef<void(AGridCell*, int, int, int)> Func)
 
 void UGrid::GenerateGrid(TArray<TSubclassOf<ATile>> TileSet)
 {
+	if (!SizeChanged()) {
+		ClearGridCells(TileSet);
+
+		return;
+	}
+
 	Clear();
 
-	for (int x = 0; x < Width; x++) {
-		for (int y = 0; y < Depth; y++) {
-			for (int z = 0; z < Height; z++) {
-				FVector SpawnPosition = GetOwner()->GetActorLocation() + FVector(x, y, z) * TileSize;
+	CurrentWidth = Width;
+	CurrentDepth = Depth;
+	CurrentHeight = Height;
+	CurrentTileSize = TileSize;
+
+	for (int x = 0; x < CurrentWidth; x++) {
+		for (int y = 0; y < CurrentDepth; y++) {
+			for (int z = 0; z < CurrentHeight; z++) {
+				FVector SpawnPosition = GetOwner()->GetActorLocation() + FVector(x, y, z) * CurrentTileSize;
 
 				AGridCell* SpawnedGridCell = GetWorld()->SpawnActor<AGridCell>(SpawnPosition, FRotator::ZeroRotator);
 
@@ -93,7 +140,7 @@ AGridCell* UGrid::GetAdjacentCell(int x, int y, int z, EDirection Direction)
 				return GetGridCell(x - 1, y, z);
 			break;
 		case EDirection::LEFT:
-			if (x < Width - 1)
+			if (x < CurrentWidth - 1)
 				return GetGridCell(x + 1, y, z);
 			break;
 		case EDirection::BACK:
@@ -101,7 +148,7 @@ AGridCell* UGrid::GetAdjacentCell(int x, int y, int z, EDirection Direction)
 				return GetGridCell(x, y - 1, z);
 			break;
 		case EDirection::FORWARD:
-			if (y < Depth - 1)
+			if (y < CurrentDepth - 1)
 				return GetGridCell(x, y + 1, z);
 			break;
 		case EDirection::DOWN:
@@ -109,14 +156,13 @@ AGridCell* UGrid::GetAdjacentCell(int x, int y, int z, EDirection Direction)
 				return GetGridCell(x, y, z - 1);
 			break;
 		case EDirection::UP:
-			if (z < Height - 1)
+			if (z < CurrentHeight - 1)
 				return GetGridCell(x, y, z + 1);
 			break;
 	}
 
 	return nullptr;
 }
-
 
 AGridCell* UGrid::GetAdjacentCell(AGridCell* GridCell, EDirection Direction)
 {
@@ -126,3 +172,62 @@ AGridCell* UGrid::GetAdjacentCell(AGridCell* GridCell, EDirection Direction)
 		return nullptr;
 }
 
+TArray<AGridCell*> UGrid::CreateBorders(TSubclassOf<ATile> BorderTile)
+{
+	TArray<AGridCell*> ChangedGridCells;
+
+	if (CurrentHeight > 0) {
+		for (int x = 0; x < CurrentWidth; x++) {
+			for (int y = 0; y < CurrentDepth; y++) {
+				GetGridCell(x, y, 0)->CreateTile(BorderTile);
+				GetGridCell(x, y, CurrentHeight - 1)->CreateTile(BorderTile);
+
+				ChangedGridCells.Add(GetGridCell(x, y, 0));
+				ChangedGridCells.Add(GetGridCell(x, y, CurrentHeight - 1));
+			}
+		}
+	}
+
+	if (CurrentDepth > 0) {
+		for (int x = 0; x < CurrentWidth; x++) {
+			for (int z = 0; z < CurrentHeight; z++) {
+				GetGridCell(x, 0, z)->CreateTile(BorderTile);
+				GetGridCell(x, CurrentDepth - 1, z)->CreateTile(BorderTile);
+
+				ChangedGridCells.Add(GetGridCell(x, 0, z));
+				ChangedGridCells.Add(GetGridCell(x, CurrentDepth - 1, z));
+			}
+		}
+	}
+
+	if (CurrentWidth > 0) {
+		for (int y = 0; y < CurrentDepth; y++) {
+			for (int z = 0; z < CurrentHeight; z++) {
+				GetGridCell(0, y, z)->CreateTile(BorderTile);
+				GetGridCell(CurrentWidth - 1, y, z)->CreateTile(BorderTile);
+
+				ChangedGridCells.Add(GetGridCell(0, y, z));
+				ChangedGridCells.Add(GetGridCell(CurrentWidth - 1, y, z));
+			}
+		}
+	}
+
+	return ChangedGridCells;
+}
+
+void UGrid::ClearGridCells(TArray<TSubclassOf<ATile>> TileSet)
+{
+	for (auto GridCell : GridCells) {
+		GridCell->Clear();
+
+		GridCell->Initialise(TileSet);
+	}
+}
+
+bool UGrid::SizeChanged()
+{
+	return	Width		!= CurrentWidth		||
+			Depth		!= CurrentDepth		||
+			Height		!= CurrentHeight	||
+			TileSize	!= CurrentTileSize;
+}

@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,7 +7,7 @@
 #include "GridCell.h"
 #include "Containers/Queue.h"
 #include "TileSet.h"
-#include "TestGridComponent.h"
+#include "Observation.h"
 #include "WFCStructure.generated.h"
 
 UCLASS()
@@ -18,44 +16,70 @@ class WAVEFUNCTIONCOLLAPSE_API AWFCStructure : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AWFCStructure();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	UPROPERTY(EditAnywhere)
-	UTileSet* TileSet;
 
 	virtual bool ShouldTickIfViewportsOnly() const override;
 
-	UPROPERTY(VisibleInstanceOnly)
-	UGrid* Grid;
+	void Generate();
+
+private:
+	UPROPERTY(EditAnywhere)
+	UTileSet* TileSet;
+
+	UPROPERTY(EditAnywhere)
+	bool bCleanBorders;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ATile> BorderTile;
+
+	UPROPERTY(EditAnywhere)
+	int MaxGenerationAttempts;
+
+	UPROPERTY(EditAnywhere)
+	bool bStopOnContradiction;
 
 	UPROPERTY(EditAnywhere)
 	bool bRegenerate;
 
-	UPROPERTY(EditAnywhere)
-	bool bClearGrid;
+	UPROPERTY(EditAnywhere, Category="Dev Tools")
+	bool bGenerateGrid;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Dev Tools")
+	bool bCreateBorders;
+
+	UPROPERTY(EditAnywhere, Category = "Dev Tools")
 	bool bTestObserve;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Dev Tools")
 	bool bTestPropagate;
+
+	UPROPERTY(EditAnywhere, Category = "Dev Tools")
+	bool bTestBacktrack;
+
+	UPROPERTY(VisibleInstanceOnly)
+	UGrid* Grid;
 
 	int Observe();
 
-	bool Propagate();
+	AGridCell* GetCellWithMinEntropy();
+
+	bool Propagate(bool bEnableBacktrack = true);
+
+	bool RemoveDisallowedTileTypes(AGridCell* GridCell, AGridCell* AdjacentGridCell, EDirection Direction);
+
+	void CreateBorders();
+
+	bool Backtrack();
 
 	TQueue<AGridCell*> ChangedCellsQueue;
 
-	FString DirectionToString(EDirection Direction);
+	TArray<EDirection> Directions;
 
-	void Generate();
+	TArray<UObservation*> BacktrackQueue;
 };

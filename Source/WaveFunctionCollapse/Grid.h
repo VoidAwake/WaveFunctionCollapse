@@ -1,9 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "Components/ActorComponent.h"
 #include "GridCell.h"
 #include "Direction.h"
@@ -15,30 +12,13 @@ class WAVEFUNCTIONCOLLAPSE_API UGrid : public UActorComponent
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	UGrid();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UPROPERTY(EditAnywhere)
-	int Width;
-
-	UPROPERTY(EditAnywhere)
-	int Depth;
-	
-	UPROPERTY(EditAnywhere)
-	int Height;
-
-	UPROPERTY(EditAnywhere)
-	float TileSize;
-
-	TArray<AGridCell*> GridCells;
 
 	AGridCell* GetGridCell(int x, int y, int z);
 
@@ -53,4 +33,36 @@ public:
 	AGridCell* GetAdjacentCell(int x, int y, int z, EDirection Direction);
 
 	AGridCell* GetAdjacentCell(AGridCell* GridCell, EDirection Direction);
+
+	TArray<AGridCell*> CreateBorders(TSubclassOf<ATile> BorderTile);
+
+private:
+	UPROPERTY(EditAnywhere)
+	int Width;
+
+	UPROPERTY(EditAnywhere)
+	int Depth;
+
+	UPROPERTY(EditAnywhere)
+	int Height;
+
+	UPROPERTY(EditAnywhere)
+	float TileSize;
+
+	UPROPERTY(EditAnywhere)
+	bool bClearGrid;
+
+	void ClearGridCells(TArray<TSubclassOf<ATile>> TileSet);
+
+	bool SizeChanged();
+
+	TArray<AGridCell*> GridCells;
+
+	int CurrentWidth;
+
+	int CurrentDepth;
+
+	int CurrentHeight;
+
+	float CurrentTileSize;
 };

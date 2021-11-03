@@ -12,9 +12,9 @@ class WAVEFUNCTIONCOLLAPSE_API UPropagation : public UObject
 	GENERATED_BODY()
 
 public:
-	void Initialise(AGridCell* GridCellArg);
+	//void Initialise(AGridCell* GridCellArg);
 
-	AGridCell* GridCell;
+	//AGridCell* GridCell;
 
 	TArray<TSubclassOf<ATile>> OldWave;
 };

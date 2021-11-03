@@ -21,7 +21,7 @@ void AGridCell::Tick(float DeltaTime)
 
 void AGridCell::Observe()
 {
-	RecordWave();
+	//RecordWave();
 
 	// Pick a random TileType from the wave
 	TSubclassOf<ATile> TileTypeToSpawn = Wave[FMath::RandRange(0, Wave.Num() - 1)];
@@ -29,32 +29,32 @@ void AGridCell::Observe()
 	CreateTile(TileTypeToSpawn);
 }
 
-bool AGridCell::RestoreWave()
-{
-	TArray<TSubclassOf<ATile>> OldWave = RecordedWaves.Pop()->OldWave;
-
-	if (Wave.Num() == 1) {
-		Clear();
-
-		TSubclassOf<ATile> ObservedTile = Wave[0];
-
-		Wave.Empty();
-
-		for (auto TileType : OldWave) {
-			if (TileType != ObservedTile) // Don't add the tile that caused the contradiction
-				Wave.Add(TileType);
-		}
-	}
-	else {
-		Wave.Empty();
-
-		for (auto TileType : OldWave) {
-			Wave.Add(TileType);
-		}
-	}
-
-	return Wave.Num() > 0;
-}
+//bool AGridCell::RestoreWave()
+//{
+//	TArray<TSubclassOf<ATile>> OldWave = RecordedWaves.Pop()->OldWave;
+//
+//	if (Wave.Num() == 1) {
+//		Clear();
+//
+//		TSubclassOf<ATile> ObservedTile = Wave[0];
+//
+//		Wave.Empty();
+//
+//		for (auto TileType : OldWave) {
+//			if (TileType != ObservedTile) // Don't add the tile that caused the contradiction
+//				Wave.Add(TileType);
+//		}
+//	}
+//	else {
+//		Wave.Empty();
+//
+//		for (auto TileType : OldWave) {
+//			Wave.Add(TileType);
+//		}
+//	}
+//
+//	return Wave.Num() > 0;
+//}
 
 void AGridCell::Clear()
 {
@@ -108,9 +108,9 @@ bool AGridCell::Allows(TSubclassOf<ATile> NeighbourTileType, EDirection Directio
 
 bool AGridCell::RemoveTileTypesFromWave(TArray<TSubclassOf<ATile>> TileTypesToRemove) {
 	if (TileTypesToRemove.Num() == 0)
-		return;
+		return true;
 
-	RecordWave();
+	//RecordWave();
 
 	for (auto TileTypeToRemove : TileTypesToRemove) {
 		Wave.Remove(TileTypeToRemove);
@@ -125,11 +125,11 @@ bool AGridCell::RemoveTileTypesFromWave(TArray<TSubclassOf<ATile>> TileTypesToRe
 	return true;
 }
 
-void AGridCell::RecordWave()
-{
-	UPropagation* WaveRecord = NewObject<UPropagation>(this);
-
-	WaveRecord->Initialise(this);
-
-	RecordedWaves.Push(WaveRecord);
-}
+//void AGridCell::RecordWave()
+//{
+//	UPropagation* WaveRecord = NewObject<UPropagation>(this);
+//
+//	WaveRecord->Initialise(this);
+//
+//	RecordedWaves.Push(WaveRecord);
+//}

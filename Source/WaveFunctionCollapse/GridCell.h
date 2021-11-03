@@ -32,7 +32,7 @@ public:
 
 	void Observe();
 
-	bool RestoreWave();
+	//bool RestoreWave();
 
 	void CreateTile(TSubclassOf<ATile> TileTypeToSpawn);
 
@@ -40,12 +40,12 @@ public:
 
 	bool RemoveTileTypesFromWave(TArray<TSubclassOf<ATile>> TileTypesToRemove);
 
-	void RecordWave();
+	//void RecordWave();
 
 	FVector GridPosition;
 
 	ATile* Tile;
 
 private:
-	TArray<UPropagation*> RecordedWaves;
+	//TArray<UPropagation*> RecordedWaves;
 };

@@ -75,7 +75,7 @@ private:
 
 	void CreateBorders();
 
-	bool Backtrack();
+	//bool Backtrack();
 
 	TQueue<AGridCell*> ChangedCellsQueue;
 

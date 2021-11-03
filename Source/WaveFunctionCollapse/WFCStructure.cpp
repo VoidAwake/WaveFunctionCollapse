@@ -67,7 +67,7 @@ void AWFCStructure::Tick(float DeltaTime)
 	}
 
 	if (bTestBacktrack) {
-		Backtrack();
+		//Backtrack();
 
 		bTestBacktrack = false;
 	}
@@ -100,14 +100,14 @@ void AWFCStructure::Generate()
 		while (Observe() == 0 && bContinue) {
 			bContradiction = !Propagate();
 
-			if (bContradiction)
-				bContradiction = !Backtrack();
+			//if (bContradiction)
+			//	bContradiction = !Backtrack();
 
-			if (bContradiction)
-				bContinue = false;
-
-			//if (bStopOnContradiction && bContradiction)
+			//if (bContradiction)
 			//	bContinue = false;
+
+			if (bStopOnContradiction && bContradiction)
+				bContinue = false;
 		}
 
 		if (!bContradiction) {
@@ -212,13 +212,13 @@ bool AWFCStructure::RemoveDisallowedTileTypes(AGridCell* GridCell, AGridCell* Ad
 	}
 
 	if (TilesToRemove.Num() > 0) {
-		if (bEnableBacktrack) {
-			UPropagation* Propagation = NewObject<UPropagation>(this);
+		//if (bEnableBacktrack) {
+		//	UPropagation* Propagation = NewObject<UPropagation>(this);
 
-			BacktrackQueue[BacktrackQueue.Num() - 1]->Propagations.Push(Propagation);
+		//	BacktrackQueue[BacktrackQueue.Num() - 1]->Propagations.Push(Propagation);
 
-			Propagation->Initialise(AdjacentGridCell);
-		}
+		//	Propagation->Initialise(AdjacentGridCell);
+		//}
 
 		ChangedCellsQueue.Enqueue(AdjacentGridCell);
 	}
@@ -242,27 +242,27 @@ void AWFCStructure::CreateBorders()
 	Propagate(false);
 }
 
-bool AWFCStructure::Backtrack()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Attempting Backtrack"));
-
-	if (BacktrackQueue.Num() == 0) {
-		UE_LOG(LogTemp, Warning, TEXT("Backtrack failed: Backtrack queue was empty"));
-		return false;
-	}
-
-	ChangedCellsQueue.Empty();
-
-	UObservation* LastObservation = BacktrackQueue.Pop();
-
-	// TEST: Undo the propagations, not removing tiles.
-
-	while (LastObservation->Propagations.Num() > 0) {
-		UPropagation* Propagation = LastObservation->Propagations.Pop();
-
-		Propagation->GridCell->RestoreWave();
-	}
-
-	// Undo the observation
-	return LastObservation->GridCell->RestoreWave();
-}
+//bool AWFCStructure::Backtrack()
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("Attempting Backtrack"));
+//
+//	if (BacktrackQueue.Num() == 0) {
+//		UE_LOG(LogTemp, Warning, TEXT("Backtrack failed: Backtrack queue was empty"));
+//		return false;
+//	}
+//
+//	ChangedCellsQueue.Empty();
+//
+//	UObservation* LastObservation = BacktrackQueue.Pop();
+//
+//	// TEST: Undo the propagations, not removing tiles.
+//
+//	while (LastObservation->Propagations.Num() > 0) {
+//		UPropagation* Propagation = LastObservation->Propagations.Pop();
+//
+//		Propagation->GridCell->RestoreWave();
+//	}
+//
+//	// Undo the observation
+//	return LastObservation->GridCell->RestoreWave();
+//}

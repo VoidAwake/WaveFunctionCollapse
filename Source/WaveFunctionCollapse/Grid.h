@@ -56,6 +56,8 @@ private:
 
 	bool SizeChanged();
 
+	void TryCreateBorderTile(TArray<AGridCell*>& ChangedGridCells, TSubclassOf<ATile> BorderTile, int x, int y, int z);
+
 	TArray<AGridCell*> GridCells;
 
 	int CurrentWidth;

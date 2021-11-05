@@ -176,14 +176,16 @@ TArray<AGridCell*> UGrid::CreateBorders(TSubclassOf<ATile> BorderTile)
 {
 	TArray<AGridCell*> ChangedGridCells;
 
+	if (!BorderTile) {
+		UE_LOG(LogTemp, Warning, TEXT("Border Creation Failed: Border tile not set."));
+		return ChangedGridCells;
+	}
+
 	if (CurrentHeight > 0) {
 		for (int x = 0; x < CurrentWidth; x++) {
 			for (int y = 0; y < CurrentDepth; y++) {
-				GetGridCell(x, y, 0)->CreateTile(BorderTile);
-				GetGridCell(x, y, CurrentHeight - 1)->CreateTile(BorderTile);
-
-				ChangedGridCells.Add(GetGridCell(x, y, 0));
-				ChangedGridCells.Add(GetGridCell(x, y, CurrentHeight - 1));
+				TryCreateBorderTile(ChangedGridCells, BorderTile, x, y, 0);
+				TryCreateBorderTile(ChangedGridCells, BorderTile, x, y, CurrentHeight - 1);
 			}
 		}
 	}
@@ -191,11 +193,8 @@ TArray<AGridCell*> UGrid::CreateBorders(TSubclassOf<ATile> BorderTile)
 	if (CurrentDepth > 0) {
 		for (int x = 0; x < CurrentWidth; x++) {
 			for (int z = 0; z < CurrentHeight; z++) {
-				GetGridCell(x, 0, z)->CreateTile(BorderTile);
-				GetGridCell(x, CurrentDepth - 1, z)->CreateTile(BorderTile);
-
-				ChangedGridCells.Add(GetGridCell(x, 0, z));
-				ChangedGridCells.Add(GetGridCell(x, CurrentDepth - 1, z));
+				TryCreateBorderTile(ChangedGridCells, BorderTile, x, 0, z);
+				TryCreateBorderTile(ChangedGridCells, BorderTile, x, CurrentDepth - 1, z);
 			}
 		}
 	}
@@ -203,16 +202,34 @@ TArray<AGridCell*> UGrid::CreateBorders(TSubclassOf<ATile> BorderTile)
 	if (CurrentWidth > 0) {
 		for (int y = 0; y < CurrentDepth; y++) {
 			for (int z = 0; z < CurrentHeight; z++) {
-				GetGridCell(0, y, z)->CreateTile(BorderTile);
-				GetGridCell(CurrentWidth - 1, y, z)->CreateTile(BorderTile);
-
-				ChangedGridCells.Add(GetGridCell(0, y, z));
-				ChangedGridCells.Add(GetGridCell(CurrentWidth - 1, y, z));
+				TryCreateBorderTile(ChangedGridCells, BorderTile, 0, y, z);
+				TryCreateBorderTile(ChangedGridCells, BorderTile, CurrentWidth - 1, y, z);
 			}
 		}
 	}
 
 	return ChangedGridCells;
+}
+
+void UGrid::TryCreateBorderTile(UPARAM(ref) TArray<AGridCell*>& ChangedGridCells, TSubclassOf<ATile> BorderTile, int x, int y, int z)
+{
+	if (!BorderTile) {
+		UE_LOG(LogTemp, Warning, TEXT("Border Tile Creation Failed: Border tile not set."));
+		return;
+	}
+
+	AGridCell* GridCell = GetGridCell(x, y, z);
+
+	if (!GridCell) {
+		UE_LOG(LogTemp, Warning, TEXT("Border Tile Creation Failed: Grid cell could not be found."));
+		return;
+	}
+
+	GetGridCell(x, y, z)->CreateTile(BorderTile);
+
+	ChangedGridCells.Add(GridCell);
+
+	return;
 }
 
 void UGrid::ClearGridCells(TArray<TSubclassOf<ATile>> TileSet)

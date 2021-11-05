@@ -26,7 +26,16 @@ public:
 
 	virtual bool ShouldTickIfViewportsOnly() const override;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(Server, Reliable)
+	void ServerGenerate();
+
+	UFUNCTION()
 	void Generate();
+
+	UPROPERTY(ReplicatedUsing = Generate)
+	int32 Seed;
 
 private:
 	UPROPERTY(EditAnywhere)

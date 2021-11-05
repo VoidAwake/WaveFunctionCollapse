@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "Direction.h"
 #include "DirectionUtility.h"
+#include "Net/UnrealNetwork.h"
 
 AWFCStructure::AWFCStructure()
 {
@@ -22,13 +23,17 @@ AWFCStructure::AWFCStructure()
 		EDirection::UP,
 		EDirection::DOWN
 	};
+
+	bReplicates = true;
 }
 
 void AWFCStructure::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Generate();
+	if (GetLocalRole() == ROLE_Authority) {
+		ServerGenerate();
+	}
 }
 
 void AWFCStructure::Tick(float DeltaTime)
@@ -78,8 +83,24 @@ bool AWFCStructure::ShouldTickIfViewportsOnly() const
 	return true;
 }
 
+void AWFCStructure::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWFCStructure, Seed);
+}
+
+void AWFCStructure::ServerGenerate_Implementation()
+{
+	Seed = FMath::Rand();
+
+	UE_LOG(LogTemp, Warning, TEXT("Server generating with seed: %i"), Seed);
+
+	Generate();
+}
+
 void AWFCStructure::Generate()
 {
+	FMath::RandInit(Seed);
+
 	if (!Grid)
 		return;
 
